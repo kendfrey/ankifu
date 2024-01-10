@@ -1,0 +1,23 @@
+{
+  "name": "ankifu",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.19.11",
+    "shx": "^0.3.4",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@sabaki/go-board": "^1.4.3",
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

@@ -1,0 +1,175 @@
+body, button, input
+{
+	background-color: #222;
+	color: #ddd;
+	font-family: 'Segoe UI', 'Segoe UI Symbol', Tahoma, Geneva, Verdana, sans-serif;
+	font-size: 14pt;
+	font-weight: 500;
+}
+
+body
+{
+	color-scheme: dark;
+	margin: 0;
+}
+
+*:focus-visible, input:focus-visible + label.button
+{
+	outline: 2px solid #ddd;
+	outline-offset: -2px;
+}
+
+button, .button
+{
+	background-color: #444;
+	height: 50px;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	text-wrap: nowrap;
+}
+
+.button
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none;
+	color: inherit;
+	user-select: none;
+}
+
+button.selected
+{
+	background-color: #258;
+}
+
+button:hover, .button:hover
+{
+	filter: brightness(1.2);
+}
+
+button:active, .button:active
+{
+	filter: brightness(0.9);
+}
+
+.danger
+{
+	background-color: #822;
+}
+
+input
+{
+	background-color: #444;
+	border-radius: 6px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+#main
+{
+	display: flex;
+	justify-content: space-between;
+	height: 100vh;
+}
+
+#menuPanel, #gamePanel
+{
+	width: 298px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	margin: 12px;
+	gap: 12px;
+	flex: 0 0 auto;
+}
+
+#menuPanel > *, #gamePanel > *
+{
+	flex: 0 0 auto;
+}
+
+#gameList
+{
+	flex: 1 1;
+	overflow-y: scroll;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding-right: 6px;
+}
+
+#gameList > *
+{
+	flex: 0 0 auto;
+	text-align: left;
+	overflow-x: hidden;
+}
+
+#uploadFile
+{
+	position: absolute;
+	height: 0;
+}
+
+#labelFormatRow
+{
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+}
+
+#labelFormatRow > *
+{
+	flex: 0 0 auto;
+}
+
+#labelFormat
+{
+	flex: 1 1;
+	width: 0;
+}
+
+#canvas
+{
+	flex: 1 1;
+	width: 0;
+}
+
+#gamePanel.hidden > *
+{
+	visibility: hidden;
+}
+
+#help
+{
+	visibility: visible !important;
+	width: 50px;
+	align-self: flex-end;
+	margin-bottom: auto;
+}
+
+#moveNavigationRow
+{
+	display: flex;
+	justify-content: center;
+	gap: 12px;
+}
+
+#moveNavigationRow > *
+{
+	width: 50px;
+	text-align: center;
+}
+
+#gameMenuRow
+{
+	display: flex;
+	gap: 12px;
+}
+
+#gameMenuRow > *
+{
+	flex: 1 1;
+}

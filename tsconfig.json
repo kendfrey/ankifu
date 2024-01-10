@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"outDir": "./js",
+		"target": "ESNext",
+		"strict": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"sourceMap": true,
+		"allowSyntheticDefaultImports": true,
+		"jsx": "react",
+	},
+	"include": ["src"],
+}
