@@ -10,11 +10,13 @@
   "license": "MIT",
   "devDependencies": {
     "esbuild": "^0.19.11",
+    "esbuild-plugin-ignore": "^1.1.1",
     "shx": "^0.3.4",
     "typescript": "^5.3.3"
   },
   "dependencies": {
     "@sabaki/go-board": "^1.4.3",
+    "@sabaki/sgf": "^3.4.7",
     "@types/react": "^18.2.47",
     "@types/react-dom": "^18.2.18",
     "react": "^18.2.0",

@@ -1,8 +1,11 @@
+import { Vertex } from "@sabaki/go-board";
+
 export interface State
 {
 	games: Game[];
 	currentGame: number;
 	currentMove: number;
+	mistakeIndicator: Vertex | null;
 	labelFormat: string;
 }
 
@@ -17,7 +20,7 @@ export interface Game
 
 export interface Move
 {
-	coord: string;
-	player: "B" | "W";
+	coord: Vertex;
+	player: 1 | -1;
 	elo: number;
 }

@@ -9,7 +9,7 @@ dist:
 
 ts: dist
 	tsc
-	esbuild ./js/index.js --bundle --sourcemap --sources-content=false --outfile=./dist/index.js
+	node build.mjs
 
 html: dist
 	shx cp -r src/html/* dist

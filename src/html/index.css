@@ -131,7 +131,7 @@ input
 	width: 0;
 }
 
-#canvas
+#board
 {
 	flex: 1 1;
 	width: 0;
@@ -161,6 +161,32 @@ input
 {
 	width: 50px;
 	text-align: center;
+}
+
+#progressLabel
+{
+	text-align: center;
+	margin-bottom: -12px;
+}
+
+#progress
+{
+	box-sizing: border-box;
+	border: 2px solid #ddd;
+	height: 12px;
+	border-radius: 6px;
+}
+
+#progress > div
+{
+	height: 100%;
+	background-color: #a80;
+	border-radius: 4px;
+}
+
+#progress > div.complete
+{
+	background-color: #2a4;
 }
 
 #gameMenuRow
