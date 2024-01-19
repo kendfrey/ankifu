@@ -59,6 +59,11 @@ button:active, .button:active
 	background-color: #822;
 }
 
+.large
+{
+	height: 100px;
+}
+
 input
 {
 	background-color: #444;

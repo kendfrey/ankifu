@@ -24,32 +24,32 @@ function App()
 					{
 						player: 1,
 						coord: [15, 3],
-						elo: 0,
+						rating: 0,
 					},
 					{
 						player: -1,
 						coord: [3, 3],
-						elo: 0,
+						rating: 0,
 					},
 					{
 						player: 1,
 						coord: [15, 15],
-						elo: 0,
+						rating: 0,
 					},
 					{
 						player: -1,
 						coord: [3, 15],
-						elo: 0,
+						rating: 0,
 					},
 					{
 						player: 1,
 						coord: [2, 2],
-						elo: 0,
+						rating: 0,
 					},
 					{
 						player: -1,
 						coord: [3, 2],
-						elo: 0,
+						rating: 0,
 					},
 				],
 				finalMove: 4,
@@ -106,35 +106,26 @@ function App()
 		],
 		currentGame: 0,
 		currentMove: 0,
-		mistakeIndicator: null,
+		mode: "test",
 		labelFormat: "{PB} {BR} vs. {PW} {WR} {EV}",
 	});
 
 	const game = currentGame(state);
 
-	let playerElo = 0;
-	let averageProb = 0;
+	let sumProb = 0;
 	let perfectProb = 1;
 	if (game !== null)
 	{
 		for (let i = 0; i < game.finalMove; i++)
 		{
 			const move = game.moves[i];
-			playerElo -= move.elo;
+			const correctProb = correctProbability(move.rating);
+			sumProb += correctProb;
+			perfectProb *= correctProb;
 		}
-		for (let i = 0; i < game.finalMove; i++)
-		{
-			const move = game.moves[i];
-			const expectedPlayerScore = expectedScore(playerElo, move.elo);
-			averageProb += expectedPlayerScore;
-			perfectProb *= expectedPlayerScore;
-		}
-		averageProb /= game.finalMove;
-		console.log(playerElo, averageProb, perfectProb);
-		console.log(game.moves.map(x => x.elo));
 	}
 
-	const progress = Math.max(perfectProb > 0.9 ? 1 : averageProb * 2 - 1, 0);
+	const progress = Math.max(perfectProb > 0.9 ? 1 : sumProb / (game?.finalMove ?? 1) * 2 - 1, 0);
 
 	let board = GoBoard.fromDimensions(game?.width ?? 19, game?.height ?? 19);
 	if (game !== null)
@@ -271,16 +262,13 @@ function App()
 			ctx.stroke();
 		}
 
-		if (state.mistakeIndicator !== null)
+		if (state.mode === "learn" && state.currentMove < game.finalMove)
 		{
-			const [x, y] = state.mistakeIndicator.map(x => (x + 1) * stoneSize - 0.5);
-			ctx.strokeStyle = "#c00";
-			ctx.lineWidth = stoneSize * 0.1;
+			const move = game.moves[state.currentMove];
+			ctx.strokeStyle = "#000";
+			ctx.lineWidth = 1;
 			ctx.beginPath();
-			ctx.moveTo(x - stoneSize * 0.2, y - stoneSize * 0.2);
-			ctx.lineTo(x + stoneSize * 0.2, y + stoneSize * 0.2);
-			ctx.moveTo(x + stoneSize * 0.2, y - stoneSize * 0.2);
-			ctx.lineTo(x - stoneSize * 0.2, y + stoneSize * 0.2);
+			ctx.ellipse((move.coord[0] + 1) * stoneSize - 0.5, (move.coord[1] + 1) * stoneSize - 0.5, stoneSize * 0.5 - 0.5, stoneSize * 0.5 - 0.5, 0, 0, Math.PI * 2);
 			ctx.stroke();
 		}
 	}
@@ -293,13 +281,22 @@ function App()
 		const { x, y, stoneSize } = getBoardOffset(canvasRef.current.width, canvasRef.current.height, game);
 		const coord = [e.nativeEvent.offsetX - x, e.nativeEvent.offsetY - y].map(x => Math.floor((x + 0.5) / stoneSize - 0.5)) as Vertex;
 
-		if (board.has(coord) && board.get(coord) === 0 && !(coord[0] === state.mistakeIndicator?.[0] && coord[1] === state.mistakeIndicator?.[1]))
+		if (board.has(coord) && board.get(coord) === 0)
 		{
 			const move = game.moves[state.currentMove];
-			if (coord[0] === move.coord[0] && coord[1] === move.coord[1])
-				setState(goToMove(updateElo(state, playerElo, 1), state.currentMove + 1));
+			const correctMove = coord[0] === move.coord[0] && coord[1] === move.coord[1];
+			if (state.mode === "test")
+			{
+				if (correctMove)
+					setState(goToMove(updateRating(state, 1), state.currentMove + 1, "test"));
+				else
+					setState({ ...updateRating(state, -1), mode: "learn" });
+			}
 			else
-				setState({ ...updateElo(state, playerElo, 0), mistakeIndicator: coord });
+			{
+				if (correctMove)
+					setState(goToMove(state, state.currentMove + 1, "test"));
+			}
 		}
 	}
 
@@ -313,6 +310,21 @@ function App()
 		const x = Math.floor((w - boardWidth) * 0.5);
 		const y = Math.floor((h - boardHeight) * 0.5);
 		return { x, y, stoneSize, boardWidth, boardHeight };
+	}
+
+	React.useEffect(() =>
+	{
+		window.addEventListener("keypress", onKeyPress, { passive: true });
+		return () => window.removeEventListener("keypress", onKeyPress);
+	});
+
+	function onKeyPress(e: KeyboardEvent)
+	{
+		if (e.target !== document.body)
+			return;
+
+		if (e.key === " ")
+			setState(randomMove(state, sumProb));
 	}
 
 	return <div id="main">
@@ -339,13 +351,14 @@ function App()
 		<canvas id="board" ref={canvasRef} onClick={boardClick} />
 		<div id="gamePanel" className={game === null ? "hidden" : ""}>
 			<a id="help" href="https://example.com" target="_blank" className="button">?</a>
+			<button onClick={() => setState(randomMove(state, sumProb))} className="large">Test me</button>
 			<div id="moveNavigationRow">
-				<button onClick={() => setState(goToMove(state, 0))}>⏮</button>
-				<button onClick={() => setState(goToMove(state, state.currentMove - 1))}>⏴</button>
-				<FriendlyInput type="text" value={state.currentMove}
-					onChange={e => { const move = parseInt(e.target.value); if (isFinite(move)) setState(goToMove(state, move)); }} />
-				<button onClick={() => setState(goToMove(state, state.currentMove + 1))}>⏵</button>
-				<button onClick={() => setState(goToMove(state, lastMove(state)))}>⏭</button>
+				<button onClick={() => setState(goToMove(state, 0, "learn"))}>⏮</button>
+				<button onClick={() => setState(goToMove(state, state.currentMove - 1, "learn"))}>⏴</button>
+				<FriendlyInput type="text" value={state.mode === "learn" ? state.currentMove.toString() : ""}
+					onChange={e => { const move = parseInt(e.target.value); if (isFinite(move)) setState(goToMove(state, move, "learn")); }} />
+				<button onClick={() => setState(goToMove(state, state.currentMove + 1, "learn"))}>⏵</button>
+				<button onClick={() => setState(goToMove(state, lastMove(state), "learn"))}>⏭</button>
 			</div>
 			<button onClick={() => setState(setAsFinalMove(state))}>Stop memorizing here</button>
 			<div id="progressLabel">{Math.floor(progress * 100) + "%"}</div>
@@ -353,7 +366,7 @@ function App()
 			<input type="text" value={game?.label ?? ""}
 				onChange={e => setState(renameCurrentGame(state, e.target.value))} />
 			<div id="gameMenuRow">
-				<DangerButton>Reset progress</DangerButton>
+				<DangerButton onClick={() => setState(resetProgress(state))}>Reset progress</DangerButton>
 				<DangerButton onClick={() => setState(deleteCurrentGame(state))}>Delete</DangerButton>
 			</div>
 		</div>
@@ -392,6 +405,20 @@ function renameCurrentGame(state: State, label: string): State
 	return newState;
 }
 
+function resetProgress(state: State): State
+{
+	const newState = copy(state);
+	const game = currentGame(newState);
+	if (game === null)
+		return state;
+
+	for (const move of game.moves)
+		move.rating = 0;
+
+	return newState;
+
+}
+
 function deleteCurrentGame(state: State): State
 {
 	const newState = copy(state);
@@ -404,16 +431,43 @@ function deleteCurrentGame(state: State): State
 	return newState;
 }
 
-function goToMove(state: State, move: number): State
+function randomMove(state: State, sumProb: number): State
+{
+	const game = currentGame(state);
+
+	if (game === null)
+		return state;
+
+	let prob = Math.random() * (game.finalMove - sumProb);
+	for (let i = 0; i < game.finalMove; i++)
+	{
+		prob -= correctProbability(-game.moves[i].rating);
+		if (prob <= 0)
+			return goToMove(state, i, "test");
+	}
+
+	return goToMove(state, 0, "test");
+}
+
+function goToMove(state: State, move: number, mode: "learn" | "test"): State
 {
 	const newState = copy(state);
-	move = Math.max(Math.min(move, currentGame(newState)?.moves.length ?? 0), 0);
 
-	if (move === newState.currentMove)
+	const game = currentGame(newState);
+	move = Math.max(Math.min(move, game?.moves.length ?? 0), 0);
+
+	if (game === null || move === newState.currentMove)
 		return state;
 
 	newState.currentMove = move;
-	newState.mistakeIndicator = null;
+
+	if (move >= game.finalMove)
+		mode = "learn";
+	else if (move === 0)
+		mode = "test";
+
+	newState.mode = mode;
+	
 	return newState;
 }
 
@@ -471,7 +525,7 @@ function addGame(state: State, sgf: string): State
 				{
 					player: 1,
 					coord: toVertex(moveNode.data.B[0]),
-					elo: 0,
+					rating: 0,
 				});
 			}
 			else if (moveNode.data.W?.[0])
@@ -480,7 +534,7 @@ function addGame(state: State, sgf: string): State
 				{
 					player: -1,
 					coord: toVertex(moveNode.data.W[0]),
-					elo: 0,
+					rating: 0,
 				});
 			}
 		}
@@ -502,7 +556,7 @@ function addGame(state: State, sgf: string): State
 	}
 }
 
-function updateElo(state: State, playerElo: number, playerScore: 0 | 1): State
+function updateRating(state: State, sign: -1 | 1): State
 {
 	const newState = copy(state);
 	const game = currentGame(newState);
@@ -511,19 +565,16 @@ function updateElo(state: State, playerElo: number, playerScore: 0 | 1): State
 		return state;
 
 	const move = game.moves[newState.currentMove];
-
-	const expectedPlayerScore = expectedScore(playerElo, move.elo);
-	move.elo -= eloIncrement(playerScore, expectedPlayerScore, 1);
-
+	move.rating = softplus(move.rating * sign) * sign;
 	return newState;
 }
 
-function expectedScore(elo: number, opponentElo: number): number
+function correctProbability(rating: number): number
 {
-	return 1 / (1 + Math.pow(10, (opponentElo - elo)));
+	return 1 / (1 + Math.pow(10, -rating));
 }
 
-function eloIncrement(score: number, expectedScore: number, k: number): number
+function softplus(x: number): number
 {
-	return k * (score - expectedScore);
+	return Math.log(1 + Math.exp(x + 1));
 }

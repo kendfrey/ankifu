@@ -5,7 +5,7 @@ export interface State
 	games: Game[];
 	currentGame: number;
 	currentMove: number;
-	mistakeIndicator: Vertex | null;
+	mode: "learn" | "test";
 	labelFormat: string;
 }
 
@@ -22,5 +22,5 @@ export interface Move
 {
 	coord: Vertex;
 	player: 1 | -1;
-	elo: number;
+	rating: number;
 }
