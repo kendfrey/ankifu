@@ -8,6 +8,7 @@ await esbuild.build(
 	sourcemap: true,
 	sourcesContent: false,
 	outfile: "./dist/index.js",
+	define: { "global": "window" },
 	plugins:
 	[
 		IgnorePlugin(

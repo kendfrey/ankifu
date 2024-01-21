@@ -119,7 +119,7 @@ textarea:disabled
 	overflow-x: hidden;
 }
 
-#uploadFile
+#importFile
 {
 	position: absolute;
 	height: 0;

@@ -1,129 +1,19 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import createPersistedState from "use-persisted-state";
 import GoBoard, { Vertex } from "@sabaki/go-board";
 import { parse } from "@sabaki/sgf";
 import DangerButton from "./danger-button";
 import FriendlyInput from "./friendly-input";
 import { State, Game } from "./state";
 
+const usePersistedState = createPersistedState<State>("ankifu-data");
 const root = createRoot(document.getElementById("app")!);
 root.render(<App />);
 
 function App()
 {
-	const [state, setState] = React.useState<State>(
-	{
-		games:
-		[
-			{
-				label: "Example game 1",
-				width: 19,
-				height: 19,
-				moves:
-				[
-					{
-						player: 1,
-						coord: [15, 3],
-						rating: 0,
-						notes: "1st move",
-					},
-					{
-						player: -1,
-						coord: [3, 3],
-						rating: 0,
-						notes: "",
-					},
-					{
-						player: 1,
-						coord: [15, 15],
-						rating: 0,
-						notes: "",
-					},
-					{
-						player: -1,
-						coord: [3, 15],
-						rating: 0,
-						notes: "",
-					},
-					{
-						player: 1,
-						coord: [2, 2],
-						rating: 0,
-						notes: "3-3 invasion",
-					},
-					{
-						player: -1,
-						coord: [3, 2],
-						rating: 0,
-						notes: "",
-					},
-				],
-				finalMove: 4,
-				notes: "0th move",
-			},
-			{
-				label: "Example game 2",
-				width: 9,
-				height: 9,
-				moves: [],
-				finalMove: 0,
-				notes: "",
-			},
-			{
-				label: "Example game 3",
-				width: 13,
-				height: 13,
-				moves: [],
-				finalMove: 0,
-				notes: "",
-			},
-			{
-				label: "Example game 4",
-				width: 14,
-				height: 14,
-				moves: [],
-				finalMove: 0,
-				notes: "",
-			},
-			{
-				label: "Example game 5",
-				width: 19,
-				height: 9,
-				moves: [],
-				finalMove: 0,
-				notes: "",
-			},
-			{
-				label: "Example game 6",
-				width: 37,
-				height: 37,
-				moves: [],
-				finalMove: 0,
-				notes: "",
-			},
-			{
-				label: "Example game 7",
-				width: 19,
-				height: 13,
-				moves: [],
-				finalMove: 0,
-				notes: "",
-			},
-			{
-				label: "Example game 8",
-				width: 20,
-				height: 19,
-				moves: [],
-				finalMove: 0,
-				notes: "",
-			},
-		],
-		currentGame: 0,
-		currentMove: 0,
-		mode: "test",
-		labelFormat: "{PB} {BR} vs. {PW} {WR} {EV}",
-	});
-
+	const [state, setState] = usePersistedState(defaultState);
 	const game = currentGame(state);
 
 	let sumProb = 0;
@@ -388,9 +278,9 @@ function App()
 					</button>
 				)}
 			</div>
-			<input type="file" id="uploadFile" accept=".sgf"
+			<input type="file" id="importFile" accept=".sgf"
 				onChange={async e => setState(addGame(state, await e.target.files?.[0]?.text() ?? ""))} />
-			<label htmlFor="uploadFile" className="button">Upload File</label>
+			<label htmlFor="importFile" className="button">Import File</label>
 			<input type="text" placeholder="Paste SGF or URL here" value=""
 				onChange={async e => setState(addGame(state, /^https?:/.test(e.target.value) ? await (await fetch(e.target.value)).text() : e.target.value))} />
 			<div id="labelFormatRow">
@@ -429,6 +319,23 @@ function App()
 function copy<T>(obj: T): T
 {
 	return JSON.parse(JSON.stringify(obj));
+}
+
+function defaultState(): State
+{
+	let state: State =
+	{
+		games: [],
+		currentGame: -1,
+		currentMove: 0,
+		mode: "learn",
+		labelFormat: "{PB} {BR} vs. {PW} {WR} {EV}",
+	};
+
+	state = addGame(state, "(;FF[4]GM[1]SZ[9];B[fd];W[df];B[ef];W[eg];B[fg];W[dg];B[dc];W[fh];B[ce];W[fc];B[gc];W[ff];B[bg];W[gd];B[fe];W[gg];B[ec];W[ge];B[fb];W[de];B[dd];W[bh];B[bf];W[hc];B[hb];W[ah];B[hd];W[he];B[ic];W[ie];B[ag];W[cf];B[be];W[cg];B[ee];W[id];B[hc];W[];B[])");
+	state.games[0].label = "Example game";
+	state.currentGame = -1;
+	return state;
 }
 
 function currentGame(state: State): Game | null
