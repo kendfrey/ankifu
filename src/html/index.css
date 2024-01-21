@@ -1,4 +1,4 @@
-body, button, input
+body, button, input, textarea
 {
 	background-color: #222;
 	color: #ddd;
@@ -64,12 +64,19 @@ button:active, .button:active
 	height: 100px;
 }
 
-input
+input, textarea
 {
 	background-color: #444;
 	border-radius: 6px;
+	border: 2px solid #777;
 	width: 100%;
 	box-sizing: border-box;
+	resize: none;
+}
+
+textarea:disabled
+{
+	filter: opacity(0.4);
 }
 
 #main
@@ -116,6 +123,7 @@ input
 {
 	position: absolute;
 	height: 0;
+	border: none;
 }
 
 #labelFormatRow

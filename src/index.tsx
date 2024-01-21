@@ -25,34 +25,41 @@ function App()
 						player: 1,
 						coord: [15, 3],
 						rating: 0,
+						notes: "1st move",
 					},
 					{
 						player: -1,
 						coord: [3, 3],
 						rating: 0,
+						notes: "",
 					},
 					{
 						player: 1,
 						coord: [15, 15],
 						rating: 0,
+						notes: "",
 					},
 					{
 						player: -1,
 						coord: [3, 15],
 						rating: 0,
+						notes: "",
 					},
 					{
 						player: 1,
 						coord: [2, 2],
 						rating: 0,
+						notes: "3-3 invasion",
 					},
 					{
 						player: -1,
 						coord: [3, 2],
 						rating: 0,
+						notes: "",
 					},
 				],
 				finalMove: 4,
+				notes: "0th move",
 			},
 			{
 				label: "Example game 2",
@@ -60,6 +67,7 @@ function App()
 				height: 9,
 				moves: [],
 				finalMove: 0,
+				notes: "",
 			},
 			{
 				label: "Example game 3",
@@ -67,6 +75,7 @@ function App()
 				height: 13,
 				moves: [],
 				finalMove: 0,
+				notes: "",
 			},
 			{
 				label: "Example game 4",
@@ -74,6 +83,7 @@ function App()
 				height: 14,
 				moves: [],
 				finalMove: 0,
+				notes: "",
 			},
 			{
 				label: "Example game 5",
@@ -81,6 +91,7 @@ function App()
 				height: 9,
 				moves: [],
 				finalMove: 0,
+				notes: "",
 			},
 			{
 				label: "Example game 6",
@@ -88,6 +99,7 @@ function App()
 				height: 37,
 				moves: [],
 				finalMove: 0,
+				notes: "",
 			},
 			{
 				label: "Example game 7",
@@ -95,6 +107,7 @@ function App()
 				height: 13,
 				moves: [],
 				finalMove: 0,
+				notes: "",
 			},
 			{
 				label: "Example game 8",
@@ -102,6 +115,7 @@ function App()
 				height: 19,
 				moves: [],
 				finalMove: 0,
+				notes: "",
 			},
 		],
 		currentGame: 0,
@@ -167,7 +181,15 @@ function App()
 
 		ctx.translate(x, y);
 
-		ctx.fillStyle = "#e0b56a";
+		ctx.fillStyle = "#e6ba73";
+		ctx.fillRect(0, 0, boardWidth, boardHeight);
+
+		var gradient = ctx.createLinearGradient(0, 0, boardWidth, 0);
+		for (let x = 0; x < boardWidth; x += 2)
+		{
+			gradient.addColorStop(x / boardWidth, `#dfad67${Math.floor(Math.pow(1.618, x % 67) % 1 * 256).toString(16).padStart(2, "0")}`);
+		}
+		ctx.fillStyle = gradient;
 		ctx.fillRect(0, 0, boardWidth, boardHeight);
 
 		ctx.strokeStyle = "#000";
@@ -244,38 +266,67 @@ function App()
 				if (s === 0)
 					continue;
 
-				ctx.fillStyle = s === 1 ? "#000" : "#fff";
+				const [cx, cy] = pos(x, y);
+				const shadow = ctx.createRadialGradient(cx, cy, stoneSize * 0.5, cx, cy, stoneSize * 0.6);
+				shadow.addColorStop(0, s === 1 ? "#0006" : "#0003");
+				shadow.addColorStop(0.4, s === 1 ? "#0002" : "#0001");
+				shadow.addColorStop(1, "#0000");
+				ctx.fillStyle = shadow;
 				ctx.beginPath();
-				ctx.ellipse((x + 1) * stoneSize - 0.5, (y + 1) * stoneSize - 0.5, stoneSize * 0.5 - 0.5, stoneSize * 0.5 - 0.5, 0, 0, Math.PI * 2);
+				ctx.ellipse(cx, cy, stoneSize, stoneSize, 0, 0, Math.PI * 2);
 				ctx.fill();
-				ctx.stroke();
+			}
+		}
+
+		for (let x = 0; x < game.width; x++)
+		{
+			for (let y = 0; y < game.height; y++)
+			{
+				const s = board.get([x, y]);
+				if (s === 0)
+					continue;
+
+				const [cx, cy] = pos(x, y);
+				const gradient = ctx.createRadialGradient(cx - stoneSize * 0.15, cy - stoneSize * 0.15, 0, cx - stoneSize * 0.15, cy - stoneSize * 0.15, stoneSize * 0.75);
+				gradient.addColorStop(0, s === 1 ? "#444" : "#fff");
+				gradient.addColorStop(1, s === 1 ? "#000" : "#aaa");
+				ctx.fillStyle = gradient;
+				ctx.beginPath();
+				ctx.ellipse(cx, cy, stoneSize * 0.5 - 0.5, stoneSize * 0.5 - 0.5, 0, 0, Math.PI * 2);
+				ctx.fill();
 			}
 		}
 
 		if (state.currentMove > 0)
 		{
 			const move = game.moves[state.currentMove - 1];
-			ctx.strokeStyle = move.player === 1 ? "#fff" : "#000";
+			const [cx, cy] = pos(...move.coord);
+			ctx.strokeStyle = move.player === 1 ? "#eee" : "#111";
 			ctx.lineWidth = stoneSize * 0.075;
 			ctx.beginPath();
-			ctx.ellipse((move.coord[0] + 1) * stoneSize - 0.5, (move.coord[1] + 1) * stoneSize - 0.5, stoneSize * 0.3 - 0.5, stoneSize * 0.3 - 0.5, 0, 0, Math.PI * 2);
+			ctx.ellipse(cx, cy, stoneSize * 0.275, stoneSize * 0.275, 0, 0, Math.PI * 2);
 			ctx.stroke();
 		}
 
-		if (state.mode === "learn" && state.currentMove < game.finalMove)
+		if (state.mode === "learn" && state.currentMove < game.moves.length)
 		{
 			const move = game.moves[state.currentMove];
-			ctx.strokeStyle = "#000";
-			ctx.lineWidth = 1;
+			const [cx, cy] = pos(...move.coord);
+			ctx.fillStyle = move.player === 1 ? "#0007" : "#fff7";
 			ctx.beginPath();
-			ctx.ellipse((move.coord[0] + 1) * stoneSize - 0.5, (move.coord[1] + 1) * stoneSize - 0.5, stoneSize * 0.5 - 0.5, stoneSize * 0.5 - 0.5, 0, 0, Math.PI * 2);
-			ctx.stroke();
+			ctx.ellipse(cx, cy, stoneSize * 0.25, stoneSize * 0.25, 0, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		function pos(x: number, y: number): [number, number]
+		{
+			return [(x + 1) * stoneSize - 0.5, (y + 1) * stoneSize - 0.5];
 		}
 	}
 
 	function boardClick(e: React.MouseEvent<HTMLCanvasElement>)
 	{
-		if (canvasRef.current === null || game === null || state.currentMove >= game.finalMove)
+		if (canvasRef.current === null || game === null || state.currentMove >= game.moves.length)
 			return;
 
 		const { x, y, stoneSize } = getBoardOffset(canvasRef.current.width, canvasRef.current.height, game);
@@ -352,8 +403,10 @@ function App()
 		<div id="gamePanel" className={game === null ? "hidden" : ""}>
 			<a id="help" href="https://example.com" target="_blank" className="button">?</a>
 			<button onClick={() => setState(randomMove(state, sumProb))} className="large">Test me</button>
+			<textarea value={currentNotes(state).notes} disabled={state.mode === "test"} placeholder="Notes" className="large"
+				onChange={e => setState(setNotes(state, e.target.value))} />
 			<div id="moveNavigationRow">
-				<button onClick={() => setState(goToMove(state, 0, "learn"))}>⏮</button>
+				<button onClick={() => setState(goToMove(state, 0, "test"))}>⏮</button>
 				<button onClick={() => setState(goToMove(state, state.currentMove - 1, "learn"))}>⏴</button>
 				<FriendlyInput type="text" value={state.mode === "learn" ? state.currentMove.toString() : ""}
 					onChange={e => { const move = parseInt(e.target.value); if (isFinite(move)) setState(goToMove(state, move, "learn")); }} />
@@ -386,11 +439,9 @@ function currentGame(state: State): Game | null
 function setCurrentGame(state: State, i: number): State
 {
 	const newState = copy(state);
-	if (i === newState.currentGame)
-		return state;
-
 	newState.currentGame = i;
 	newState.currentMove = currentGame(newState)?.finalMove ?? 0;
+	newState.mode = "learn";
 	return newState;
 }
 
@@ -431,6 +482,26 @@ function deleteCurrentGame(state: State): State
 	return newState;
 }
 
+function currentNotes(state: State): { notes: string }
+{
+	const game = currentGame(state);
+
+	if (game === null || state.mode === "test")
+		return { notes: "" };
+
+	if (state.currentMove === 0)
+		return game;
+
+	return game.moves[state.currentMove - 1];
+}
+
+function setNotes(state: State, notes: string): State
+{
+	const newState = copy(state);
+	currentNotes(newState).notes = notes;
+	return newState;
+}
+
 function randomMove(state: State, sumProb: number): State
 {
 	const game = currentGame(state);
@@ -456,15 +527,13 @@ function goToMove(state: State, move: number, mode: "learn" | "test"): State
 	const game = currentGame(newState);
 	move = Math.max(Math.min(move, game?.moves.length ?? 0), 0);
 
-	if (game === null || move === newState.currentMove)
+	if (game === null)
 		return state;
 
 	newState.currentMove = move;
 
 	if (move >= game.finalMove)
 		mode = "learn";
-	else if (move === 0)
-		mode = "test";
 
 	newState.mode = mode;
 	
@@ -515,6 +584,7 @@ function addGame(state: State, sgf: string): State
 			height,
 			moves: [],
 			finalMove: 0,
+			notes: "",
 		};
 
 		for (let moveNode = gameNode.children[0]; moveNode; moveNode = moveNode.children[0])
@@ -526,6 +596,7 @@ function addGame(state: State, sgf: string): State
 					player: 1,
 					coord: toVertex(moveNode.data.B[0]),
 					rating: 0,
+					notes: "",
 				});
 			}
 			else if (moveNode.data.W?.[0])
@@ -535,14 +606,15 @@ function addGame(state: State, sgf: string): State
 					player: -1,
 					coord: toVertex(moveNode.data.W[0]),
 					rating: 0,
+					notes: "",
 				});
 			}
 		}
 
 		game.finalMove = game.moves.length;
 
-		newState.games.push(game);
-		return setCurrentGame(newState, newState.games.length - 1);
+		newState.games.unshift(game);
+		return setCurrentGame(newState, 0);
 	}
 	catch (e)
 	{

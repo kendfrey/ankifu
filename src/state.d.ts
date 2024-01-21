@@ -16,6 +16,7 @@ export interface Game
 	height: number;
 	moves: Move[];
 	finalMove: number;
+	notes: string;
 }
 
 export interface Move
@@ -23,4 +24,5 @@ export interface Move
 	coord: Vertex;
 	player: 1 | -1;
 	rating: number;
+	notes: string;
 }
