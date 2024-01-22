@@ -1,6 +1,6 @@
 # Ankifu
 
-Ankifu is an application for memorizing Go game records.
+Ankifu is an application for memorizing Go game records. Open it here: http://kendallfrey.com/ankifu/
 
 ![](ankifu.png)
 
