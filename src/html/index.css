@@ -27,6 +27,7 @@ button, .button
 	border-radius: 6px;
 	cursor: pointer;
 	text-wrap: nowrap;
+	overflow-x: hidden;
 }
 
 .button
@@ -116,7 +117,6 @@ textarea:disabled
 {
 	flex: 0 0 auto;
 	text-align: left;
-	overflow-x: hidden;
 }
 
 #importFile

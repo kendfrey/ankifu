@@ -280,7 +280,7 @@ function App()
 			</div>
 			<input type="file" id="importFile" accept=".sgf"
 				onChange={async e => setState(addGame(state, await e.target.files?.[0]?.text() ?? ""))} />
-			<label htmlFor="importFile" className="button">Import File</label>
+			<label htmlFor="importFile" className="button">Import file</label>
 			<input type="text" placeholder="Paste SGF or URL here" value=""
 				onChange={async e => setState(addGame(state, /^https?:/.test(e.target.value) ? await (await fetch(e.target.value)).text() : e.target.value))} />
 			<div id="labelFormatRow">
@@ -291,17 +291,17 @@ function App()
 		</div>
 		<canvas id="board" ref={canvasRef} onClick={boardClick} />
 		<div id="gamePanel" className={game === null ? "hidden" : ""}>
-			<a id="help" href="https://example.com" target="_blank" className="button">?</a>
+			<a id="help" href="https://github.com/kendfrey/ankifu" target="_blank" className="button material-symbols-outlined">help</a>
 			<button onClick={() => setState(randomMove(state, sumProb))} className="large">Test me</button>
 			<textarea value={currentNotes(state).notes} disabled={state.mode === "test"} placeholder="Notes" className="large"
 				onChange={e => setState(setNotes(state, e.target.value))} />
 			<div id="moveNavigationRow">
-				<button onClick={() => setState(goToMove(state, 0, "test"))}>⏮</button>
-				<button onClick={() => setState(goToMove(state, state.currentMove - 1, "learn"))}>⏴</button>
+				<button onClick={() => setState(goToMove(state, 0, "test"))} className="material-symbols-outlined">first_page</button>
+				<button onClick={() => setState(goToMove(state, state.currentMove - 1, "learn"))} className="material-symbols-outlined">navigate_before</button>
 				<FriendlyInput type="text" value={state.mode === "learn" ? state.currentMove.toString() : ""}
 					onChange={e => { const move = parseInt(e.target.value); if (isFinite(move)) setState(goToMove(state, move, "learn")); }} />
-				<button onClick={() => setState(goToMove(state, state.currentMove + 1, "learn"))}>⏵</button>
-				<button onClick={() => setState(goToMove(state, lastMove(state), "learn"))}>⏭</button>
+				<button onClick={() => setState(goToMove(state, state.currentMove + 1, "learn"))} className="material-symbols-outlined">navigate_next</button>
+				<button onClick={() => setState(goToMove(state, lastMove(state), "learn"))} className="material-symbols-outlined">last_page</button>
 			</div>
 			<button onClick={() => setState(setAsFinalMove(state))}>Stop memorizing here</button>
 			<div id="progressLabel">{Math.floor(progress * 100) + "%"}</div>
