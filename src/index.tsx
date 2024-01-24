@@ -279,10 +279,10 @@ function App()
 				)}
 			</div>
 			<input type="file" id="importFile" accept=".sgf"
-				onChange={async e => setState(addGame(state, await e.target.files?.[0]?.text() ?? ""))} />
+				onChange={async e => setState(await importGame(state, e.target.files?.[0]))} />
 			<label htmlFor="importFile" className="button">Import file</label>
 			<input type="text" placeholder="Paste SGF or URL here" value=""
-				onChange={async e => setState(addGame(state, /^https?:/.test(e.target.value) ? await (await fetch(e.target.value)).text() : e.target.value))} />
+				onChange={async e => setState(await importGame(state, e.target.value))} />
 			<div id="labelFormatRow">
 				<label htmlFor="labelFormat">Label format: </label>
 				<input type="text" id="labelFormat" value={state.labelFormat}
@@ -291,7 +291,7 @@ function App()
 		</div>
 		<canvas id="board" ref={canvasRef} onClick={boardClick} />
 		<div id="gamePanel" className={game === null ? "hidden" : ""}>
-			<a id="help" href="https://github.com/kendfrey/ankifu" target="_blank" className="button material-symbols-outlined">help</a>
+			<a id="help" href="https://github.com/kendfrey/ankifu#game-library" target="_blank" className="button material-symbols-outlined">help</a>
 			<button onClick={() => setState(randomMove(state, sumProb))} className="large">Test me</button>
 			<textarea value={currentNotes(state).notes} disabled={state.mode === "test"} placeholder="Notes" className="large"
 				onChange={e => setState(setNotes(state, e.target.value))} />
@@ -472,62 +472,95 @@ function setAsFinalMove(state: State): State
 	return newState;
 }
 
-function addGame(state: State, sgf: string): State
+async function importGame(state: State, source: string | Blob | undefined): Promise<State>
 {
 	try
 	{
-		const newState = copy(state);
-		const gameNode = parse(sgf)[0];
+		if (!source)
+			return state;
 
-		const size = gameNode.data.SZ?.[0] ?? "19";
-		const [width, height] = (size.includes(":") ? size.split(":") : [size, size]).map(x => parseInt(x));
-
-		const game: Game =
+		let sgf: string;
+		if (typeof source === "string")
 		{
-			label: state.labelFormat
-				.replace(/\{(\w+)\}/g, (_, key) => gameNode.data[key]?.[0] ?? "")
-				.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, ""),
-			width,
-			height,
-			moves: [],
-			finalMove: 0,
-			notes: "",
-		};
-
-		for (let moveNode = gameNode.children[0]; moveNode; moveNode = moveNode.children[0])
-		{
-			if (moveNode.data.B?.[0])
+			if (/^https?:/.test(source))
 			{
-				game.moves.push(
-				{
-					player: 1,
-					coord: toVertex(moveNode.data.B[0]),
-					rating: 0,
-					notes: "",
-				});
+				const response = await fetch(source);
+				if (!response.ok)
+					throw new Error(response.status + " " + response.statusText);
+
+				sgf = await response.text();
 			}
-			else if (moveNode.data.W?.[0])
+			else
 			{
-				game.moves.push(
-				{
-					player: -1,
-					coord: toVertex(moveNode.data.W[0]),
-					rating: 0,
-					notes: "",
-				});
+				sgf = source;
 			}
 		}
+		else
+		{
+			sgf = await source.text();
+		}
 
-		game.finalMove = game.moves.length;
-
-		newState.games.unshift(game);
-		return setCurrentGame(newState, 0);
+		return addGame(state, sgf);
 	}
 	catch (e)
 	{
+		alert(e + "\nAre you sure this is a valid SGF game record?");
 		console.error(e);
 		return state;
 	}
+}
+
+function addGame(state: State, sgf: string): State
+{
+	const newState = copy(state);
+	const gameNode = parse(sgf)[0];
+
+	if (gameNode.children.length === 0)
+		throw new Error("No moves found");
+
+	const size = gameNode.data.SZ?.[0] ?? "19";
+	const [width, height] = (size.includes(":") ? size.split(":") : [size, size]).map(x => parseInt(x));
+
+	const game: Game =
+	{
+		label: state.labelFormat
+			.replace(/\{(\w+)\}/g, (_, key) => gameNode.data[key]?.[0] ?? "")
+			.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, ""),
+		width,
+		height,
+		moves: [],
+		finalMove: 0,
+		notes: "",
+	};
+
+	for (let moveNode = gameNode.children[0]; moveNode; moveNode = moveNode.children[0])
+	{
+		if (moveNode.data.B?.[0])
+		{
+			game.moves.push(
+			{
+				player: 1,
+				coord: toVertex(moveNode.data.B[0]),
+				rating: 0,
+				notes: "",
+			});
+		}
+		else if (moveNode.data.W?.[0])
+		{
+			game.moves.push(
+			{
+				player: -1,
+				coord: toVertex(moveNode.data.W[0]),
+				rating: 0,
+				notes: "",
+			});
+		}
+	}
+
+	game.finalMove = game.moves.length;
+
+	newState.games.unshift(game);
+	return setCurrentGame(newState, 0);
 
 	function toVertex(coord: string): Vertex
 	{
