@@ -255,17 +255,58 @@ function App()
 
 	React.useEffect(() =>
 	{
-		window.addEventListener("keypress", onKeyPress, { passive: true });
-		return () => window.removeEventListener("keypress", onKeyPress);
+		window.addEventListener("keydown", onKeyDown, { passive: true });
+		return () => window.removeEventListener("keydown", onKeyDown);
 	});
 
-	function onKeyPress(e: KeyboardEvent)
+	function onKeyDown(e: KeyboardEvent)
 	{
 		if (e.target !== document.body)
 			return;
 
-		if (e.key === " ")
-			setState(randomMove(state, sumProb));
+		switch (e.code)
+		{
+			case "Space":
+				testMe();
+				break;
+			case "Home":
+				goToFirst();
+				break;
+			case "ArrowLeft":
+				goToPrevious();
+				break;
+			case "ArrowRight":
+				goToNext();
+				break;
+			case "End":
+				goToLast();
+				break;
+		}
+	}
+
+	function testMe()
+	{
+		setState(randomMove(state, sumProb));
+	}
+
+	function goToFirst()
+	{
+		setState(goToMove(state, 0, "test"));
+	}
+
+	function goToPrevious()
+	{
+		setState(goToMove(state, state.currentMove - 1, "learn"));
+	}
+
+	function goToNext()
+	{
+		setState(goToMove(state, state.currentMove + 1, "learn"));
+	}
+
+	function goToLast()
+	{
+		setState(goToMove(state, lastMove(state), "learn"));
 	}
 
 	return <div id="main">
@@ -292,16 +333,16 @@ function App()
 		<canvas id="board" ref={canvasRef} onClick={boardClick} />
 		<div id="gamePanel" className={game === null ? "hidden" : ""}>
 			<a id="help" href="https://github.com/kendfrey/ankifu#game-library" target="_blank" className="button material-symbols-outlined">help</a>
-			<button onClick={() => setState(randomMove(state, sumProb))} className="large">Test me</button>
+			<button onClick={testMe} className="large">Test me</button>
 			<textarea value={currentNotes(state).notes} disabled={state.mode === "test"} placeholder="Notes" className="large"
 				onChange={e => setState(setNotes(state, e.target.value))} />
 			<div id="moveNavigationRow">
-				<button onClick={() => setState(goToMove(state, 0, "test"))} className="material-symbols-outlined">first_page</button>
-				<button onClick={() => setState(goToMove(state, state.currentMove - 1, "learn"))} className="material-symbols-outlined">navigate_before</button>
+				<button onClick={goToFirst} className="material-symbols-outlined">first_page</button>
+				<button onClick={goToPrevious} className="material-symbols-outlined">navigate_before</button>
 				<FriendlyInput type="text" value={state.mode === "learn" ? state.currentMove.toString() : ""}
 					onChange={e => { const move = parseInt(e.target.value); if (isFinite(move)) setState(goToMove(state, move, "learn")); }} />
-				<button onClick={() => setState(goToMove(state, state.currentMove + 1, "learn"))} className="material-symbols-outlined">navigate_next</button>
-				<button onClick={() => setState(goToMove(state, lastMove(state), "learn"))} className="material-symbols-outlined">last_page</button>
+				<button onClick={goToNext} className="material-symbols-outlined">navigate_next</button>
+				<button onClick={goToLast} className="material-symbols-outlined">last_page</button>
 			</div>
 			<button onClick={() => setState(setAsFinalMove(state))}>Stop memorizing here</button>
 			<div id="progressLabel">{Math.floor(progress * 100) + "%"}</div>

@@ -33,7 +33,7 @@ Click the "Test me" button to go to a random position in the game. It is more li
 
 The "Notes" field allows you to make notes about specific moves. The notes are hidden in testing mode.
 
-Use the arrow buttons to navigate through the game using learning mode. You can also type in a move number to jump to a specific move. The move number is hidden in testing mode.
+Use the arrow buttons to navigate through the game using learning mode. You can also type in a move number to jump to a specific move. The move number is hidden in testing mode. You can also use the left and right arrow keys, as well as the Home and End keys, as shortcuts for these buttons.
 
 The "Stop memorizing here" button is used to mark the final move to be memorized. It's useful for excluding dame moves, or if you only want to memorize part of a game. Moves after this point will not be included in your score and will not be shown in test mode.
 
