@@ -24636,14 +24636,44 @@
       return { x, y, stoneSize, boardWidth, boardHeight };
     }
     import_react5.default.useEffect(() => {
-      window.addEventListener("keypress", onKeyPress, { passive: true });
-      return () => window.removeEventListener("keypress", onKeyPress);
+      window.addEventListener("keydown", onKeyDown, { passive: true });
+      return () => window.removeEventListener("keydown", onKeyDown);
     });
-    function onKeyPress(e3) {
+    function onKeyDown(e3) {
       if (e3.target !== document.body)
         return;
-      if (e3.key === " ")
-        setState(randomMove(state, sumProb));
+      switch (e3.code) {
+        case "Space":
+          testMe();
+          break;
+        case "Home":
+          goToFirst();
+          break;
+        case "ArrowLeft":
+          goToPrevious();
+          break;
+        case "ArrowRight":
+          goToNext();
+          break;
+        case "End":
+          goToLast();
+          break;
+      }
+    }
+    function testMe() {
+      setState(randomMove(state, sumProb));
+    }
+    function goToFirst() {
+      setState(goToMove(state, 0, "test"));
+    }
+    function goToPrevious() {
+      setState(goToMove(state, state.currentMove - 1, "learn"));
+    }
+    function goToNext() {
+      setState(goToMove(state, state.currentMove + 1, "learn"));
+    }
+    function goToLast() {
+      setState(goToMove(state, lastMove(state), "learn"));
     }
     return import_react5.default.createElement(
       "div",
@@ -24652,9 +24682,9 @@
         "div",
         { id: "menuPanel" },
         import_react5.default.createElement("div", { id: "gameList" }, state.games.map((game2, i) => import_react5.default.createElement("button", { key: i, title: game2.label, className: state.currentGame === i ? "selected" : "", onClick: () => setState(setCurrentGame(state, i)) }, game2.label))),
-        import_react5.default.createElement("input", { type: "file", id: "importFile", accept: ".sgf", onChange: async (e3) => setState(addGame(state, await e3.target.files?.[0]?.text() ?? "")) }),
+        import_react5.default.createElement("input", { type: "file", id: "importFile", accept: ".sgf", onChange: async (e3) => setState(await importGame(state, e3.target.files?.[0])) }),
         import_react5.default.createElement("label", { htmlFor: "importFile", className: "button" }, "Import file"),
-        import_react5.default.createElement("input", { type: "text", placeholder: "Paste SGF or URL here", value: "", onChange: async (e3) => setState(addGame(state, /^https?:/.test(e3.target.value) ? await (await fetch(e3.target.value)).text() : e3.target.value)) }),
+        import_react5.default.createElement("input", { type: "text", placeholder: "Paste SGF or URL here", value: "", onChange: async (e3) => setState(await importGame(state, e3.target.value)) }),
         import_react5.default.createElement(
           "div",
           { id: "labelFormatRow" },
@@ -24666,21 +24696,21 @@
       import_react5.default.createElement(
         "div",
         { id: "gamePanel", className: game === null ? "hidden" : "" },
-        import_react5.default.createElement("a", { id: "help", href: "https://github.com/kendfrey/ankifu", target: "_blank", className: "button material-symbols-outlined" }, "help"),
-        import_react5.default.createElement("button", { onClick: () => setState(randomMove(state, sumProb)), className: "large" }, "Test me"),
+        import_react5.default.createElement("a", { id: "help", href: "https://github.com/kendfrey/ankifu#game-library", target: "_blank", className: "button material-symbols-outlined" }, "help"),
+        import_react5.default.createElement("button", { onClick: testMe, className: "large" }, "Test me"),
         import_react5.default.createElement("textarea", { value: currentNotes(state).notes, disabled: state.mode === "test", placeholder: "Notes", className: "large", onChange: (e3) => setState(setNotes(state, e3.target.value)) }),
         import_react5.default.createElement(
           "div",
           { id: "moveNavigationRow" },
-          import_react5.default.createElement("button", { onClick: () => setState(goToMove(state, 0, "test")), className: "material-symbols-outlined" }, "first_page"),
-          import_react5.default.createElement("button", { onClick: () => setState(goToMove(state, state.currentMove - 1, "learn")), className: "material-symbols-outlined" }, "navigate_before"),
+          import_react5.default.createElement("button", { onClick: goToFirst, className: "material-symbols-outlined" }, "first_page"),
+          import_react5.default.createElement("button", { onClick: goToPrevious, className: "material-symbols-outlined" }, "navigate_before"),
           import_react5.default.createElement(FriendlyInput, { type: "text", value: state.mode === "learn" ? state.currentMove.toString() : "", onChange: (e3) => {
             const move = parseInt(e3.target.value);
             if (isFinite(move))
               setState(goToMove(state, move, "learn"));
           } }),
-          import_react5.default.createElement("button", { onClick: () => setState(goToMove(state, state.currentMove + 1, "learn")), className: "material-symbols-outlined" }, "navigate_next"),
-          import_react5.default.createElement("button", { onClick: () => setState(goToMove(state, lastMove(state), "learn")), className: "material-symbols-outlined" }, "last_page")
+          import_react5.default.createElement("button", { onClick: goToNext, className: "material-symbols-outlined" }, "navigate_next"),
+          import_react5.default.createElement("button", { onClick: goToLast, className: "material-symbols-outlined" }, "last_page")
         ),
         import_react5.default.createElement("button", { onClick: () => setState(setAsFinalMove(state)) }, "Stop memorizing here"),
         import_react5.default.createElement("div", { id: "progressLabel" }, Math.floor(progress * 100) + "%"),
@@ -24804,44 +24834,65 @@
     game.finalMove = newState.currentMove;
     return newState;
   }
-  function addGame(state, sgf) {
+  async function importGame(state, source) {
     try {
-      const newState = copy(state);
-      const gameNode = (0, import_sgf.parse)(sgf)[0];
-      const size = gameNode.data.SZ?.[0] ?? "19";
-      const [width, height] = (size.includes(":") ? size.split(":") : [size, size]).map((x) => parseInt(x));
-      const game = {
-        label: state.labelFormat.replace(/\{(\w+)\}/g, (_, key) => gameNode.data[key]?.[0] ?? "").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, ""),
-        width,
-        height,
-        moves: [],
-        finalMove: 0,
-        notes: ""
-      };
-      for (let moveNode = gameNode.children[0]; moveNode; moveNode = moveNode.children[0]) {
-        if (moveNode.data.B?.[0]) {
-          game.moves.push({
-            player: 1,
-            coord: toVertex(moveNode.data.B[0]),
-            rating: 0,
-            notes: ""
-          });
-        } else if (moveNode.data.W?.[0]) {
-          game.moves.push({
-            player: -1,
-            coord: toVertex(moveNode.data.W[0]),
-            rating: 0,
-            notes: ""
-          });
+      if (!source)
+        return state;
+      let sgf;
+      if (typeof source === "string") {
+        if (/^https?:/.test(source)) {
+          const response = await fetch(source);
+          if (!response.ok)
+            throw new Error(response.status + " " + response.statusText);
+          sgf = await response.text();
+        } else {
+          sgf = source;
         }
+      } else {
+        sgf = await source.text();
       }
-      game.finalMove = game.moves.length;
-      newState.games.unshift(game);
-      return setCurrentGame(newState, 0);
+      return addGame(state, sgf);
     } catch (e3) {
+      alert(e3 + "\nAre you sure this is a valid SGF game record?");
       console.error(e3);
       return state;
     }
+  }
+  function addGame(state, sgf) {
+    const newState = copy(state);
+    const gameNode = (0, import_sgf.parse)(sgf)[0];
+    if (gameNode.children.length === 0)
+      throw new Error("No moves found");
+    const size = gameNode.data.SZ?.[0] ?? "19";
+    const [width, height] = (size.includes(":") ? size.split(":") : [size, size]).map((x) => parseInt(x));
+    const game = {
+      label: state.labelFormat.replace(/\{(\w+)\}/g, (_, key) => gameNode.data[key]?.[0] ?? "").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, ""),
+      width,
+      height,
+      moves: [],
+      finalMove: 0,
+      notes: ""
+    };
+    for (let moveNode = gameNode.children[0]; moveNode; moveNode = moveNode.children[0]) {
+      if (moveNode.data.B?.[0]) {
+        game.moves.push({
+          player: 1,
+          coord: toVertex(moveNode.data.B[0]),
+          rating: 0,
+          notes: ""
+        });
+      } else if (moveNode.data.W?.[0]) {
+        game.moves.push({
+          player: -1,
+          coord: toVertex(moveNode.data.W[0]),
+          rating: 0,
+          notes: ""
+        });
+      }
+    }
+    game.finalMove = game.moves.length;
+    newState.games.unshift(game);
+    return setCurrentGame(newState, 0);
     function toVertex(coord) {
       return [...coord.toLowerCase()].map((c) => c.charCodeAt(0) - "a".charCodeAt(0));
     }
