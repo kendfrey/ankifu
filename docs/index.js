@@ -24873,26 +24873,29 @@
       finalMove: 0,
       notes: ""
     };
+    if (gameNode.data.AB) {
+      for (const coord of gameNode.data.AB) {
+        game.moves.push(move(1, coord));
+      }
+    }
+    if (gameNode.data.AW) {
+      for (const coord of gameNode.data.AW) {
+        game.moves.push(move(-1, coord));
+      }
+    }
     for (let moveNode = gameNode.children[0]; moveNode; moveNode = moveNode.children[0]) {
       if (moveNode.data.B?.[0]) {
-        game.moves.push({
-          player: 1,
-          coord: toVertex(moveNode.data.B[0]),
-          rating: 0,
-          notes: ""
-        });
+        game.moves.push(move(1, moveNode.data.B[0]));
       } else if (moveNode.data.W?.[0]) {
-        game.moves.push({
-          player: -1,
-          coord: toVertex(moveNode.data.W[0]),
-          rating: 0,
-          notes: ""
-        });
+        game.moves.push(move(-1, moveNode.data.W[0]));
       }
     }
     game.finalMove = game.moves.length;
     newState.games.unshift(game);
     return setCurrentGame(newState, 0);
+    function move(player, coord) {
+      return { player, coord: toVertex(coord), rating: 0, notes: "" };
+    }
     function toVertex(coord) {
       return [...coord.toLowerCase()].map((c) => c.charCodeAt(0) - "a".charCodeAt(0));
     }
