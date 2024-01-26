@@ -5,7 +5,7 @@ import GoBoard, { Vertex } from "@sabaki/go-board";
 import { parse } from "@sabaki/sgf";
 import DangerButton from "./danger-button";
 import FriendlyInput from "./friendly-input";
-import { State, Game } from "./state";
+import { State, Game, Move } from "./state";
 
 const usePersistedState = createPersistedState<State>("ankifu-data");
 const root = createRoot(document.getElementById("app")!);
@@ -574,27 +574,30 @@ function addGame(state: State, sgf: string): State
 		notes: "",
 	};
 
+	if (gameNode.data.AB)
+	{
+		for (const coord of gameNode.data.AB)
+		{
+			game.moves.push(move(1, coord));
+		}
+	}
+	if (gameNode.data.AW)
+	{
+		for (const coord of gameNode.data.AW)
+		{
+			game.moves.push(move(-1, coord));
+		}
+	}
+
 	for (let moveNode = gameNode.children[0]; moveNode; moveNode = moveNode.children[0])
 	{
 		if (moveNode.data.B?.[0])
 		{
-			game.moves.push(
-			{
-				player: 1,
-				coord: toVertex(moveNode.data.B[0]),
-				rating: 0,
-				notes: "",
-			});
+			game.moves.push(move(1, moveNode.data.B[0]));
 		}
 		else if (moveNode.data.W?.[0])
 		{
-			game.moves.push(
-			{
-				player: -1,
-				coord: toVertex(moveNode.data.W[0]),
-				rating: 0,
-				notes: "",
-			});
+			game.moves.push(move(-1, moveNode.data.W[0]));
 		}
 	}
 
@@ -602,6 +605,11 @@ function addGame(state: State, sgf: string): State
 
 	newState.games.unshift(game);
 	return setCurrentGame(newState, 0);
+
+	function move(player: 1 | -1, coord: string): Move
+	{
+		return { player, coord: toVertex(coord), rating: 0, notes: "" };
+	}
 
 	function toVertex(coord: string): Vertex
 	{
