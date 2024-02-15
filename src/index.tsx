@@ -42,6 +42,7 @@ function App()
 	}
 
 	const canvasRef = React.useRef<HTMLCanvasElement>(null);
+	const stoneSoundRef = React.useRef<HTMLAudioElement>(null);
 
 	React.useEffect(() =>
 	{
@@ -229,14 +230,22 @@ function App()
 			if (state.mode === "test")
 			{
 				if (correctMove)
+				{
+					stoneSoundRef.current?.play();
 					setState(goToMove(updateRating(state, 1), state.currentMove + 1, "test"));
+				}
 				else
+				{
 					setState({ ...updateRating(state, -1), mode: "learn" });
+				}
 			}
 			else
 			{
 				if (correctMove)
+				{
+					stoneSoundRef.current?.play();
 					setState(goToMove(state, state.currentMove + 1, "test"));
+				}
 			}
 		}
 	}
@@ -331,6 +340,7 @@ function App()
 			</div>
 		</div>
 		<canvas id="board" ref={canvasRef} onClick={boardClick} />
+		<audio ref={stoneSoundRef} src="stone.wav" />
 		<div id="gamePanel" className={game === null ? "hidden" : ""}>
 			<a id="help" href="https://github.com/kendfrey/ankifu#game-library" target="_blank" className="button material-symbols-outlined">help</a>
 			<button onClick={testMe} className="large">Test me</button>
