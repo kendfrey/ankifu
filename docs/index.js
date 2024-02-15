@@ -24482,6 +24482,7 @@
       }
     }
     const canvasRef = import_react5.default.useRef(null);
+    const stoneSoundRef = import_react5.default.useRef(null);
     import_react5.default.useEffect(() => {
       drawBoard();
     }, [state]);
@@ -24617,13 +24618,17 @@
         const move = game.moves[state.currentMove];
         const correctMove = coord[0] === move.coord[0] && coord[1] === move.coord[1];
         if (state.mode === "test") {
-          if (correctMove)
+          if (correctMove) {
+            stoneSoundRef.current?.play();
             setState(goToMove(updateRating(state, 1), state.currentMove + 1, "test"));
-          else
+          } else {
             setState({ ...updateRating(state, -1), mode: "learn" });
+          }
         } else {
-          if (correctMove)
+          if (correctMove) {
+            stoneSoundRef.current?.play();
             setState(goToMove(state, state.currentMove + 1, "test"));
+          }
         }
       }
     }
@@ -24693,6 +24698,7 @@
         )
       ),
       import_react5.default.createElement("canvas", { id: "board", ref: canvasRef, onClick: boardClick }),
+      import_react5.default.createElement("audio", { ref: stoneSoundRef, src: "stone.wav" }),
       import_react5.default.createElement(
         "div",
         { id: "gamePanel", className: game === null ? "hidden" : "" },
